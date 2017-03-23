@@ -1,0 +1,21 @@
+{
+  "name": "liushoukun/api",
+  "description": "A RESTful API package",
+  "license": "LICENSE",
+  "minimum-stability": "dev",
+  "authors": [
+    {
+      "name": "liushoukun",
+      "email": "liushoukun66@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "DawnApi\\": "src/"
+    }
+  },
+  "require": {
+    "topthink/framework": "^5.0",
+    "ircmaxell/random-lib": "^1.2"
+  }
+}
