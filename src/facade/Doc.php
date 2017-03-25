@@ -50,11 +50,12 @@ abstract class Doc
      */
     public static $dataFieldMaps = [
         'name' => '参数名',
+        'desc' => '说明',
         'require' => '必须',
         'type' => '类型',
         'default' => '默认值',
         'range' => '范围',
-        'desc' => '说明',
+
     ];
 
     /**

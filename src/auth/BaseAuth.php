@@ -27,20 +27,19 @@ class BaseAuth
     public static function auth($auth)
     {
         $request = Request::instance();
-        //多个验证
-        foreach ($auth as $item) {
-            try {
-                if ($item->authenticate($request) == true) continue;
+
+        try {
+            if ($auth->authenticate($request) == true) {
+                return true;
+            } else {
                 throw new UnauthorizedException();
-            } catch (UnauthorizedException $e) {
-                throw new UnauthorizedException($e->authenticate, $e->getMessage());
-            } catch (Exception $e) {
-                throw  new Exception('server error', 500);
-                //todo continue;
             }
+        } catch (UnauthorizedException $e) {
+            throw new UnauthorizedException($e->authenticate, $e->getMessage());
+        } catch (\Exception $e) {
+            throw  new Exception('server error', 500);
         }
 
-        return true;
     }
 
 

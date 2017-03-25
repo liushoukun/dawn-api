@@ -45,7 +45,7 @@ abstract class Api
      */
     public $apiAuth = false;
 
-    private static $app;
+    public static $app;
     /**
      * 当前请求类型
      * @var string
@@ -104,7 +104,8 @@ abstract class Api
     /**
      * 执行代码
      * @param Request $request
-     * @return mixed
+     * @return \think\Response|\think\response\Json|\think\response\Jsonp|\think\response\Xml
+     * @throws UnauthorizedException
      */
     public function restful(Request $request)
     {
@@ -113,29 +114,40 @@ abstract class Api
         $this->register();
         //设置响应类型
         $this->setType();
-        try {
-            /**
-             * 配置开启并且控制器开启后执行验证程序
-             * 认证授权通过  return true,
-             * 不通过可返回 return false or throw new AuthException
-             */
-            //认证
+
+        if (self::getConfig('api_debug')) {
             $auth = (self::getConfig('api_auth') && $this->apiAuth) ? self::auth() : true;
             if ($auth !== true) throw new UnauthorizedException();
             //执行操作
             $response = $this->run($request);
 
-        } catch (UnauthorizedException $e) {
-            //授权认证失败
-            $response = $this->sendError(401, $e->getMessage(), 401, [], $e->getHeaders());
-        } catch (Exception $e) {
-            //其他错误 返回500
-            // todo errorReminder
+        } else {
+            try {
+                /**
+                 * 配置开启并且控制器开启后执行验证程序
+                 * 认证授权通过  return true,
+                 * 不通过可返回 return false or throw new AuthException
+                 */
+                //认证
+                $auth = (self::getConfig('api_auth') && $this->apiAuth) ? self::auth() : true;
+                if ($auth !== true) throw new UnauthorizedException();
+                //执行操作
+                $response = $this->run($request);
+
+            } catch (UnauthorizedException $e) {
+                //授权认证失败
+                $response = $this->sendError(401, $e->getMessage(), 401, [], $e->getHeaders());
+            } catch (Exception $e) {
+                //其他错误 返回500
+                // todo errorReminder
 //            $this->errorReminder($e, $request);
-            $response = $this->sendError(500, 'server error', 500);
+                $response = $this->sendError(500, 'server error', 500);
+            }
+            //清空之前输出 保证输出格式
+            ob_end_clean();
+
         }
-        //清空之前输出 保证输出格式
-        ob_end_clean();
+
         return $response;
     }
 
@@ -176,17 +188,9 @@ abstract class Api
         if (!isset(self::$app['auth']) || !self::$app['auth']) {
             $auth = self::getConfig('auth_class');
             //支持数组配置
-            if (is_array($auth)) {
-                foreach ($auth as $item) {
-                    //判断是否实现验证接口
-                    if (((new \ReflectionClass($item))->implementsInterface(AuthContract::class)))
-                        self::$app['auth'][] = Factory::getInstance($item);
-                }
-            } else {
-                //判断是否实现验证接口
-                if (((new \ReflectionClass($auth))->implementsInterface(AuthContract::class)))
-                    self::$app['auth'][] = Factory::getInstance($auth);
-            }
+            //判断是否实现验证接口
+            if (((new \ReflectionClass($auth))->implementsInterface(AuthContract::class)))
+                self::$app['auth']= Factory::getInstance($auth);
         }
         return self::$app['auth'];
     }

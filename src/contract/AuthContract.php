@@ -12,6 +12,8 @@ use think\Request;
 
 interface AuthContract
 {
+
+
     /**
      * 认证授权通过客户端信息和路由等
      * @param Request $request
@@ -24,5 +26,11 @@ interface AuthContract
      * @return mixed
      */
      function getClient(Request $request);
+
+    /**
+     * 获取用户信息
+     * @return mixed
+     */
+     public function getUser();
 
 }

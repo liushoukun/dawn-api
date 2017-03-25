@@ -23,11 +23,12 @@ abstract class OAuth implements AuthContract
     protected $client_id;
     protected $secret;
     protected $access_token;
+    public $user;
     /**
      * 过期时间
      * @var int
      */
-    public $expires = 0;
+    public static $expires = 0;
 
     /**
      * 认证授权 通过用户信息和路由
@@ -118,15 +119,6 @@ abstract class OAuth implements AuthContract
      */
     abstract public function certification();
 
-
-    private function buildAccessToken()
-    {
-        //$this->client_id
-        //$this->secret;
-        //
-
-
-    }
-
+    abstract public function getUser();
 
 }

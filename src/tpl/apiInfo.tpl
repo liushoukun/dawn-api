@@ -12,7 +12,7 @@
     <link href="__STATIC__/hadmin/css/plugins/bootstrap-table/bootstrap-table.min.css" rel="stylesheet">
     <link href="__STATIC__/hadmin/css/animate.css" rel="stylesheet">
     <!--markdown-->
-    <link rel="stylesheet" type="text/css" href="__STATIC__/hadmin/css/plugins/markdown/bootstrap-markdown.min.css"/>
+     <link rel="stylesheet" href="__STATIC__/hadmin/css/plugins/editormd/editormd.preview.css" />
     <!--markdown-->
     <style>
         .markdown p img {
@@ -257,17 +257,36 @@
 <script src="__STATIC__/hadmin/js/plugins/bootstrap-table/bootstrap-table-mobile.min.js"></script>
 <script src="__STATIC__/hadmin/js/plugins/bootstrap-table/locale/bootstrap-table-zh-CN.min.js"></script>
 
-<!-- simditor -->
-<script type="text/javascript" src="__STATIC__/hadmin/js/plugins/markdown/markdown.js"></script>
-<script type="text/javascript" src="__STATIC__/hadmin/js/plugins/markdown/to-markdown.js"></script>
-<script type="text/javascript" src="__STATIC__/hadmin/js/plugins/markdown/bootstrap-markdown.js"></script>
-<script type="text/javascript" src="__STATIC__/hadmin/js/plugins/markdown/bootstrap-markdown.zh.js"></script>
+<!-- editormd -->
+<script src="__STATIC__/hadmin/js/plugins/editormd/lib/marked.min.js"></script>
+<script src="__STATIC__/hadmin/js/plugins/editormd/lib/prettify.min.js"></script>
+<script src="__STATIC__/hadmin/js/plugins/editormd/lib/raphael.min.js"></script>
+<script src="__STATIC__/hadmin/js/plugins/editormd/lib/underscore.min.js"></script>
+<script src="__STATIC__/hadmin/js/plugins/editormd/lib/sequence-diagram.min.js"></script>
+<script src="__STATIC__/hadmin/js/plugins/editormd/lib/flowchart.min.js"></script>
+<script src="__STATIC__/hadmin/js/plugins/editormd/lib/jquery.flowchart.min.js"></script>
+<script src="__STATIC__/hadmin/js/plugins/editormd/editormd.js"></script>
 
 <script>
     //获取class md
 
-    $.get("__ROOT__{$classDoc.readme}", function (data) {
-        $('#markdown-class').html(markdown.toHTML(data))
+    $.get("__ROOT__{$classDoc.readme}", function(markdown) {
+        editormd.markdownToHTML("markdown-class", {
+            markdown        : markdown ,//+ "\r\n" + $("#append-test").text(),
+            //htmlDecode      : true,       // 开启 HTML 标签解析，为了安全性，默认不开启
+            htmlDecode      : "style,script,iframe",  // you can filter tags decode
+            //toc             : false,
+            tocm            : true,    // Using [TOCM]
+            //tocContainer    : "#custom-toc-container", // 自定义 ToC 容器层
+            //gfm             : false,
+            //tocDropdown     : true,
+            // markdownSourceCode : true, // 是否保留 Markdown 源码，即是否删除保存源码的 Textarea 标签
+            emoji           : true,
+            taskList        : true,
+            tex             : true,  // 默认不解析
+            flowChart       : true,  // 默认不解析
+            sequenceDiagram : true,  // 默认不解析
+        });
     });
 
 </script>
@@ -317,8 +336,24 @@
     <script>
         //获取method md
 
-        $.get("__ROOT__{$vo.readme}", function (data) {
-            $('#markdown-{$k}').html(markdown.toHTML(data))
+
+        $.get("__ROOT__{$vo.readme}", function(markdown) {
+            editormd.markdownToHTML("markdown-{$k}", {
+                markdown        : markdown ,//+ "\r\n" + $("#append-test").text(),
+                //htmlDecode      : true,       // 开启 HTML 标签解析，为了安全性，默认不开启
+                htmlDecode      : "style,script,iframe",  // you can filter tags decode
+                //toc             : false,
+                tocm            : true,    // Using [TOCM]
+                //tocContainer    : "#custom-toc-container", // 自定义 ToC 容器层
+                //gfm             : false,
+                //tocDropdown     : true,
+                // markdownSourceCode : true, // 是否保留 Markdown 源码，即是否删除保存源码的 Textarea 标签
+                emoji           : true,
+                taskList        : true,
+                tex             : true,  // 默认不解析
+                flowChart       : true,  // 默认不解析
+                sequenceDiagram : true,  // 默认不解析
+            });
         });
 
     </script>
