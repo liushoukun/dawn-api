@@ -34,5 +34,5 @@ git clone  hhttps://git.oschina.net/liushoukun/hadmin.git
 ```
 
 
-## demo & document
- [dawn-api-demo](http://git.oschina.net/liushoukun/restfulapi-tp5)
+## dome & 文档
+ [https://github.com/liushoukun/dawn-api-demo](https://github.com/liushoukun/dawn-api-demo)
