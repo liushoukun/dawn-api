@@ -20,15 +20,55 @@ use think\Request;
 abstract class OAuth implements AuthContract
 {
     use Send;
-    protected $client_id;
-    protected $secret;
-    protected $access_token;
-    public $user;
     /**
-     * 过期时间
+     * client_id
+     *
+     * @var
+     */
+    protected $client_id;
+    /**
+     * secret
+     *
+     * @var
+     */
+    protected $secret;
+    /**
+     * @var
+     */
+    protected $access_token;
+    /**
+     * 过期时间秒数
+     *
      * @var int
      */
-    public static $expires = 0;
+    public static $expires = 72000;
+
+    /**
+     * 客户端信息
+     *
+     * @var
+     */
+    public $clientInfo;
+
+    /**
+     * 用户信息
+     *
+     * @var
+     */
+    public $user;
+    /**
+     * accessToken存储前缀
+     *
+     * @var string
+     */
+    public static $accessTokenPrefix = 'accessToken_';
+
+    /**
+     * accessTokenAndClientPrefix存储前缀
+     *
+     * @var string
+     */
+    public static $accessTokenAndClientPrefix = 'accessTokenAndClient_';
 
     /**
      * 认证授权 通过用户信息和路由
@@ -119,6 +159,10 @@ abstract class OAuth implements AuthContract
      */
     abstract public function certification();
 
+    /**
+     * 获取用户信息
+     * @return mixed
+     */
     abstract public function getUser();
 
 }

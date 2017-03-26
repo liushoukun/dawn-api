@@ -72,11 +72,7 @@ abstract class Api
     ];
 
 
-    /**
-     * 架构函数 取得模板对象实例
-     * @access public
-     */
-    public function __construct()
+    public function init()
     {
         // 资源类型检测
         $request = Request::instance();
@@ -90,14 +86,20 @@ abstract class Api
         } else {
             $this->type = $ext;
         }
+
+        //必要性的注册
+        $this->register();
+        //设置响应类型
+        $this->setType();
+
         // 请求方式检测
         $method = strtolower($request->method());
-        if (false === stripos($this->restMethodList, $method)) {
-            // 请求方式非法 则用默认请求方法
-            $method = $this->restDefaultMethod;
-        }
         $this->method = $method;
+        if (false === stripos($this->restMethodList, $method)) {
+            return false;
+        }
 
+        return true;
 
     }
 
@@ -110,17 +112,14 @@ abstract class Api
     public function restful(Request $request)
     {
 
-        //必要性的注册
-        $this->register();
-        //设置响应类型
-        $this->setType();
-
+        //检查方法是否允许等初始操作
+        $init = $this->init();
+        if ($init !== true) return $this->sendError(405, 'Method Not Allowed', 405, [], ["Access-Control-Allow-Origin" => $this->restMethodList]);;
         if (self::getConfig('api_debug')) {
             $auth = (self::getConfig('api_auth') && $this->apiAuth) ? self::auth() : true;
             if ($auth !== true) throw new UnauthorizedException();
             //执行操作
             $response = $this->run($request);
-
         } else {
             try {
                 /**
@@ -139,15 +138,11 @@ abstract class Api
                 $response = $this->sendError(401, $e->getMessage(), 401, [], $e->getHeaders());
             } catch (Exception $e) {
                 //其他错误 返回500
-                // todo errorReminder
-//            $this->errorReminder($e, $request);
                 $response = $this->sendError(500, 'server error', 500);
             }
             //清空之前输出 保证输出格式
             ob_end_clean();
-
         }
-
         return $response;
     }
 
@@ -190,7 +185,7 @@ abstract class Api
             //支持数组配置
             //判断是否实现验证接口
             if (((new \ReflectionClass($auth))->implementsInterface(AuthContract::class)))
-                self::$app['auth']= Factory::getInstance($auth);
+                self::$app['auth'] = Factory::getInstance($auth);
         }
         return self::$app['auth'];
     }
@@ -240,7 +235,7 @@ abstract class Api
      */
     public function _empty()
     {
-        return $this->sendError(500, 'not method!', 500);
+        return $this->sendSuccess([], 'empty method!', 200);
     }
 
 }
