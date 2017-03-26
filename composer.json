@@ -1,8 +1,7 @@
 {
   "name": "liushoukun/dawn-api",
   "description": "A RESTful API package",
-  "license": "LICENSE",
-  "minimum-stability": "dev",
+  "license": "Apache-2.0",
   "authors": [
     {
       "name": "liushoukun",
