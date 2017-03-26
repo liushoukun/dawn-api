@@ -27,7 +27,6 @@ class BaseAuth
     public static function auth($auth)
     {
         $request = Request::instance();
-
         try {
             if ($auth->authenticate($request) == true) {
                 return true;

@@ -18,8 +18,8 @@ use think\Url;
 
 abstract class Doc
 {
-    const METHOD_POSTFIX = 'Response';
-    public static $titleDoc = 'API文档';
+    use Send;
+    public  $titleDoc = 'API文档';
     /**
      * 字段类型
      * @var array
@@ -65,22 +65,20 @@ abstract class Doc
     {
         $mainHtmlPath = dirname(__FILE__) . DS . '..' . DS . 'tpl' . DS . 'main.tpl';
         $mainHtmlPath = (Config::get('mainHtmlPath')) ? Config::get('mainHtmlPath') : $mainHtmlPath;
-        return view($mainHtmlPath, ['titleDoc' => self::$titleDoc]);
-
-
+        return view($mainHtmlPath, ['titleDoc' => $this->titleDoc]);
     }
 
     /**
      * 接口列表
      * @return \think\response\View
      */
-    public function apiList()
+    public function index()
     {
         $apiList = self::getApiDocList();
         $apiListHtmlPath = dirname(__FILE__) . DS . '..' . DS . 'tpl' . DS . 'apiList.tpl';
         $apiListHtmlPath = (Config::get('apiListHtmlPath')) ? Config::get('apiListHtmlPath') : $apiListHtmlPath;
         $menu = (empty($apiList)) ? '' : self::buildMenuHtml(Tree::makeTree($apiList));
-        return view($apiListHtmlPath, ['menu' => $menu, 'titleDoc' => self::$titleDoc]);
+        return view($apiListHtmlPath, ['menu' => $menu, 'titleDoc' => $this->titleDoc]);
 
     }
 
@@ -104,7 +102,7 @@ abstract class Doc
             if (!isset($apiOne['readme']) || empty($apiOne['readme'])) return $this->sendError('', '没有接口');
             $apiMarkdownHtmlPath = dirname(__FILE__) . DS . '..' . DS . 'tpl' . DS . 'apiMarkdown.tpl';
             $apiMarkdownHtmlPath = (Config::get('apiMarkdownHtmlPath')) ? Config::get('apiMarkdownHtmlPath') : $apiMarkdownHtmlPath;
-            return view($apiMarkdownHtmlPath, ['classDoc' => $apiOne, 'titleDoc' => self::$titleDoc]);
+            return view($apiMarkdownHtmlPath, ['classDoc' => $apiOne, 'titleDoc' =>$this->titleDoc]);
         }
 
         //获取请求列表文档
@@ -117,7 +115,7 @@ abstract class Doc
         $fieldMaps['return'] = self::$returnFieldMaps;
         $fieldMaps['data'] = self::$dataFieldMaps;
         $fieldMaps['type'] = self::$typeMaps;
-        return view($apiInfoHtmlPath, ['classDoc' => $classDoc, 'methodDoc' => $methodDoc, 'fieldMaps' => $fieldMaps, 'titleDoc' => self::$titleDoc]);
+        return view($apiInfoHtmlPath, ['classDoc' => $classDoc, 'methodDoc' => $methodDoc, 'fieldMaps' => $fieldMaps, 'titleDoc' => $this->titleDoc]);
     }
 
     /**
@@ -138,41 +136,11 @@ abstract class Doc
     }
 
     /**
-     * 获取数据
-     * @param Request $request
-     * @return Response|\think\response\Json|\think\response\Jsonp|\think\response\Redirect|\think\response\View|\think\response\Xml
-     */
-    public function tableData(Request $request)
-    {
-        $id = $request->param('id');
-        $apiOne = self::getApiDocOne($id);
-        $className = $apiOne['class'];
-        $method = $request->param('method', 'get');
-        $dataType = $request->param('dataType', 'data');
-        //获取接口类注释
-        $methodDoc = self::getMethodListDoc($className);
-        switch ($dataType) {
-            case 'data':
-                $responseData = array_values($methodDoc[$method]['rules']);
-                break;
-            case 'return':
-                $responseData = array_values($methodDoc[$method]['return']);
-                break;
-            default:
-                $responseData = [];
-                break;
-        }
-
-        return Response::create($responseData, 'json');
-    }
-
-
-    /**
      * 获取接口类文档
      * @param $className
      * @return array
      */
-    public static function getClassDoc($className)
+    private static function getClassDoc($className)
     {
         try {
             $reflection = new \ReflectionClass($className);
@@ -188,7 +156,7 @@ abstract class Doc
      * @param $className
      * @return mixed
      */
-    public static function getMethodListDoc($className)
+    private static function getMethodListDoc($className)
     {
         //获取参数规则
         $rules = $className::getRules();
@@ -208,7 +176,7 @@ abstract class Doc
      * @param $className
      * @return array
      */
-    public static function getRestMethodList($className)
+    private static function getRestMethodList($className)
     {
         $reflection = new \ReflectionClass($className);
         $Properties = $reflection->getDefaultProperties();

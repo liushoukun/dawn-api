@@ -86,7 +86,7 @@
                         <ul class="folder-list" style="padding: 0">
                             {foreach name="methodDoc" item="vo" key="k" }
                                 {php} $label_class_one='';$label_class_one = array_rand($label_class,1){/php}
-                                <li><a href="#get"><span class="label label-{$label_class[$label_class_one]}">{$k}</span> {$vo.title}</a></li>
+                                <li><a href="#{$k}"><span class="label label-{$label_class[$label_class_one]}">{$k}</span> {$vo.title}</a></li>
                             {/foreach}
 
                         </ul>
@@ -119,7 +119,7 @@
     </div>
     <!--methodDoc-->
     {foreach name="methodDoc" item="vo" key="k" }
-        <li class="line dk"></li>
+        <div class="hr-line-dashed"></div>
         <div id="{$k}" class="row">
             <div class="ibox float-e-margins ">
                 <div class="ibox-title" data-toggle="collapse" data-target="#content-{$k}">

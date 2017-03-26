@@ -65,5 +65,10 @@ abstract class Basic implements AuthContract
      */
     abstract public function certification(Request $request);
 
+    /**
+     * 获取用户信息
+     * @return mixed
+     */
+    abstract public function getUser();
 
 }
