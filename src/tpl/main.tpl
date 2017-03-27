@@ -10,6 +10,9 @@
     <title> {$titleDoc}</title>
     <meta name="keywords" content="">
     <meta name="description" content="">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="cache-control" content="no-cache">
+    <meta http-equiv="expires" content="0">
 
     <link rel="shortcut icon" href="favicon.ico">
     <link href="__STATIC__/hadmin/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
