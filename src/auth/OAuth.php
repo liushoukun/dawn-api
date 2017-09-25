@@ -79,12 +79,12 @@ abstract class OAuth implements AuthContract
     final function authenticate(Request $request)
     {
         //获取AccessToken 没有则会抛出异常
-        $this->getAccessToken($request);
         try {
+            $this->getAccessToken($request);
             //验证授权
             return $this->certification($request);
         } catch (UnauthorizedException $e) {
-            return $e;
+            throw new  UnauthorizedException('Bearer', $e->getMessage());
         } catch (Exception $e) {
             throw new  UnauthorizedException('Bearer', 'Invalid authentication credentials.');
         }
@@ -136,19 +136,18 @@ abstract class OAuth implements AuthContract
         $request = Request::instance();
         //先行验证是否有传参
         $this->access_token = $request->param('access_token', null);
+
         if ($this->access_token) return $this;
-        //没有再获取
-        try {
-            $authorization = $request->header('authorization');
-            if (strpos($authorization, 'Bearer ') !== false) {
-                $authorization = trim(str_replace("Bearer ", "", $authorization));
-                $this->access_token = $authorization;
-            } else {
-                throw new  UnauthorizedException('Bearer', 'Invalid authentication credentials.');
-            }
-        } catch (Exception $e) {
+
+        $authorization = $request->header('authorization');
+
+        if (strpos($authorization, 'Bearer ') !== false) {
+            $authorization = trim(str_replace("Bearer ", "", $authorization));
+            $this->access_token = $authorization;
+        } else {
             throw new  UnauthorizedException('Bearer', 'Invalid authentication credentials.');
-        }
+          }
+
         return $this;
 
     }

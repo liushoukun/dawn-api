@@ -8,9 +8,9 @@
 // +----------------------------------------------------------------------
 namespace DawnApi\exception;
 
-use think\Exception;
 
-class UnauthorizedException extends Exception
+
+class UnauthorizedException extends \Exception
 {
 
     public $authenticate;

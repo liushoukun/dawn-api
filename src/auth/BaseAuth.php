@@ -27,18 +27,7 @@ class BaseAuth
     public static function auth($auth)
     {
         $request = Request::instance();
-        try {
-            if ($auth->authenticate($request) == true) {
-                return true;
-            } else {
-                throw new UnauthorizedException();
-            }
-        } catch (UnauthorizedException $e) {
-            throw new UnauthorizedException($e->authenticate, $e->getMessage());
-        } catch (\Exception $e) {
-            throw  new Exception('server error', 500);
-        }
-
+        $auth->authenticate($request);
     }
 
 

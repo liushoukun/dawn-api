@@ -19,7 +19,7 @@ use think\Url;
 abstract class Doc
 {
     use Send;
-    public  $titleDoc = 'API文档';
+    public $titleDoc = 'API文档';
     /**
      * 字段类型
      * @var array
@@ -58,6 +58,16 @@ abstract class Doc
 
     ];
 
+    public static $restToMethod = [
+        'index' => 'GET',
+        'create' => 'GET',
+        'save' => 'POST',
+        'read' => 'GET',
+        'edit' => 'GET',
+        'update' => 'PUT',
+        'delete' => 'DELETE',
+    ];
+
     /**
      * 文档首页
      */
@@ -79,7 +89,6 @@ abstract class Doc
         $apiListHtmlPath = (Config::get('apiListHtmlPath')) ? Config::get('apiListHtmlPath') : $apiListHtmlPath;
         $menu = (empty($apiList)) ? '' : self::buildMenuHtml(Tree::makeTree($apiList));
         return view($apiListHtmlPath, ['menu' => $menu, 'titleDoc' => $this->titleDoc]);
-
     }
 
     /**
@@ -92,17 +101,15 @@ abstract class Doc
         $id = $request->param('id');
         $apiOne = self::getApiDocOne($id);
         $className = $apiOne['class'];
-
         //获取接口类注释
         $classDoc = self::getClassDoc($className);
-
         //没有接口类  判断是否有 Markdown文档
         if ($classDoc == false) {
             //输出 Markdown文档
             if (!isset($apiOne['readme']) || empty($apiOne['readme'])) return $this->sendError('', '没有接口');
             $apiMarkdownHtmlPath = dirname(__FILE__) . DS . '..' . DS . 'tpl' . DS . 'apiMarkdown.tpl';
             $apiMarkdownHtmlPath = (Config::get('apiMarkdownHtmlPath')) ? Config::get('apiMarkdownHtmlPath') : $apiMarkdownHtmlPath;
-            return view($apiMarkdownHtmlPath, ['classDoc' => $apiOne, 'titleDoc' =>$this->titleDoc]);
+            return view($apiMarkdownHtmlPath, ['classDoc' => $apiOne, 'titleDoc' => $this->titleDoc]);
         }
 
         //获取请求列表文档
@@ -115,7 +122,7 @@ abstract class Doc
         $fieldMaps['return'] = self::$returnFieldMaps;
         $fieldMaps['data'] = self::$dataFieldMaps;
         $fieldMaps['type'] = self::$typeMaps;
-        return view($apiInfoHtmlPath, ['classDoc' => $classDoc, 'methodDoc' => $methodDoc, 'fieldMaps' => $fieldMaps, 'titleDoc' => $this->titleDoc]);
+        return view($apiInfoHtmlPath, ['restToMethod' => self::$restToMethod, 'classDoc' => $classDoc, 'methodDoc' => $methodDoc, 'fieldMaps' => $fieldMaps, 'titleDoc' => $this->titleDoc]);
     }
 
     /**
@@ -162,11 +169,20 @@ abstract class Doc
         $rules = $className::getRules();
         $restMethodList = self::getRestMethodList($className);
         foreach ($restMethodList as $method) {
+            $rc = new \ReflectionClass($className);
+            if (false == $rc->hasMethod($method)) continue;
             $reflection = new \ReflectionMethod($className, $method);
             $docComment = $reflection->getDocComment();
             //获取title,desc,readme,return等说明
             $methodDoc[$method] = self::getDoc($docComment);
-            $methodDoc[$method]['rules'] = array_merge($rules['all'], $rules[$method]);
+            if (isset($rules[$method])) {
+                $rules['all'] = (isset($rules['all'])) ? $rules['all'] : [];
+                $methodDoc[$method]['rules'] = array_merge($rules['all'], $rules[$method]);
+            } else {
+                $rules['all'] = (isset($rules['all'])) ? $rules['all'] : [];
+                $methodDoc[$method]['rules'] = $rules['all'];
+            }
+
         }
         return $methodDoc;
     }
@@ -178,9 +194,15 @@ abstract class Doc
      */
     private static function getRestMethodList($className)
     {
+
         $reflection = new \ReflectionClass($className);
         $Properties = $reflection->getDefaultProperties();
         $restMethodList = explode('|', $Properties['restMethodList']);
+        //是否添加有附加方法
+        if (isset($Properties['extraMethodList'])) {
+            $extraMethodList = explode('|', $Properties['extraMethodList']);
+            $restMethodList = array_merge($restMethodList, $extraMethodList);
+        }
         return $restMethodList;
     }
 
