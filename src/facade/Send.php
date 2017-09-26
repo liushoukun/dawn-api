@@ -13,13 +13,7 @@ use think\response\Redirect;
 
 trait Send
 {
-
-    /**
-     * 默认返回资源类型
-     * @var string
-     */
     protected $restDefaultType = 'json';
-
     /**
      * 设置响应类型
      * @param null $type
@@ -47,7 +41,8 @@ trait Send
         $responseData['message'] = (string)$message;
         if (!empty($data)) $responseData['data'] = $data;
         $responseData = array_merge($responseData, $options);
-        return $this->response($responseData, $code, $headers);
+
+        return $this->response($responseData, $code, $headers,$options);
     }
 
     /**
@@ -65,7 +60,7 @@ trait Send
         $responseData['message'] = (string)$message;
         if (!empty($data)) $responseData['data'] = $data;
         $responseData = array_merge($responseData, $options);
-        return $this->response($responseData, $code, $headers);
+        return $this->response($responseData, $code, $headers,$options);
     }
 
     /**
@@ -86,19 +81,20 @@ trait Send
         $response->code($code)->params($params)->with($with);
         return $response;
     }
-
     /**
      * 响应
      * @param $responseData
      * @param $code
      * @param $headers
+     * @param $options
      * @return Response|\think\response\Json|\think\response\Jsonp|Redirect|\think\response\View|\think\response\Xml
      */
-    public function response($responseData, $code, $headers)
+    public function response($responseData, $code, $headers,$options)
     {
         if (!isset($this->type) || empty($this->type)) $this->setType();
-        return Response::create($responseData, $this->type, $code, $headers);
+        return Response::create($responseData,$this->type, $code, $headers,$options);
     }
+
 
 
 }

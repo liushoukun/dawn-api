@@ -109,7 +109,8 @@ abstract class OAuth implements AuthContract
         //先行验证是否有传参
         $this->client_id = $request->param('client_id', null);
         $this->secret = $request->param('secret', null);
-        if ($this->client_id || $this->secret) return $this;
+
+        if ($this->client_id && $this->secret) return $this;
         //没有再获取
         try {
             $authorization = $request->header('authorization');
@@ -120,7 +121,7 @@ abstract class OAuth implements AuthContract
             $this->client_id = $username;
             $this->secret = $secret;
         } catch (Exception $e) {
-            throw new  UnauthorizedException('Basic', 'Invalid authentication credentials.');
+            throw new UnauthorizedException();
         }
 
         return $this;

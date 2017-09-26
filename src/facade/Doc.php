@@ -18,7 +18,12 @@ use think\Url;
 
 abstract class Doc
 {
-    use Send;
+    public function __construct()
+    {
+        Config::set('app_trace',false);
+    }
+
+
     public $titleDoc = 'API文档';
     /**
      * 字段类型
@@ -68,15 +73,7 @@ abstract class Doc
         'delete' => 'DELETE',
     ];
 
-    /**
-     * 文档首页
-     */
-    public function main()
-    {
-        $mainHtmlPath = dirname(__FILE__) . DS . '..' . DS . 'tpl' . DS . 'main.tpl';
-        $mainHtmlPath = (Config::get('mainHtmlPath')) ? Config::get('mainHtmlPath') : $mainHtmlPath;
-        return view($mainHtmlPath, ['titleDoc' => $this->titleDoc]);
-    }
+
 
     /**
      * 接口列表
@@ -84,11 +81,11 @@ abstract class Doc
      */
     public function index()
     {
+        $mainHtmlPath = dirname(__FILE__) . DS . '..' . DS . 'tpl' . DS . 'main.tpl';
+        $mainHtmlPath = (Config::get('mainHtmlPath')) ? Config::get('mainHtmlPath') : $mainHtmlPath;
         $apiList = self::getApiDocList();
-        $apiListHtmlPath = dirname(__FILE__) . DS . '..' . DS . 'tpl' . DS . 'apiList.tpl';
-        $apiListHtmlPath = (Config::get('apiListHtmlPath')) ? Config::get('apiListHtmlPath') : $apiListHtmlPath;
         $menu = (empty($apiList)) ? '' : self::buildMenuHtml(Tree::makeTree($apiList));
-        return view($apiListHtmlPath, ['menu' => $menu, 'titleDoc' => $this->titleDoc]);
+        return view($mainHtmlPath, ['menu' => $menu, 'titleDoc' => $this->titleDoc]);
     }
 
     /**
@@ -100,29 +97,34 @@ abstract class Doc
     {
         $id = $request->param('id');
         $apiOne = self::getApiDocOne($id);
+
+        $apiList = self::getApiDocList();
+        $menu = (empty($apiList)) ? '' : self::buildMenuHtml(Tree::makeTree($apiList));
+
         $className = $apiOne['class'];
         //获取接口类注释
         $classDoc = self::getClassDoc($className);
+
         //没有接口类  判断是否有 Markdown文档
         if ($classDoc == false) {
             //输出 Markdown文档
-            if (!isset($apiOne['readme']) || empty($apiOne['readme'])) return $this->sendError('', '没有接口');
+            if (!isset($apiOne['readme']) || empty($apiOne['readme'])) return false;
             $apiMarkdownHtmlPath = dirname(__FILE__) . DS . '..' . DS . 'tpl' . DS . 'apiMarkdown.tpl';
             $apiMarkdownHtmlPath = (Config::get('apiMarkdownHtmlPath')) ? Config::get('apiMarkdownHtmlPath') : $apiMarkdownHtmlPath;
-            return view($apiMarkdownHtmlPath, ['classDoc' => $apiOne, 'titleDoc' => $this->titleDoc]);
+            return view($apiMarkdownHtmlPath, ['menu' => $menu,'classDoc' => $apiOne, 'titleDoc' => $this->titleDoc]);
         }
-
         //获取请求列表文档
         $methodDoc = self::getMethodListDoc($className);
         //模板位置
         $apiInfoHtmlPath = dirname(__FILE__) . DS . '..' . DS . 'tpl' . DS . 'apiInfo.tpl';
         $apiInfoHtmlPath = (Config::get('apiInfoHtmlPath')) ? Config::get('apiInfoHtmlPath') : $apiInfoHtmlPath;
-
         //字段
         $fieldMaps['return'] = self::$returnFieldMaps;
         $fieldMaps['data'] = self::$dataFieldMaps;
         $fieldMaps['type'] = self::$typeMaps;
-        return view($apiInfoHtmlPath, ['restToMethod' => self::$restToMethod, 'classDoc' => $classDoc, 'methodDoc' => $methodDoc, 'fieldMaps' => $fieldMaps, 'titleDoc' => $this->titleDoc]);
+
+        $data = ['menu' => $menu, 'restToMethod' => self::$restToMethod, 'classDoc' => $classDoc, 'methodDoc' => $methodDoc, 'fieldMaps' => $fieldMaps, 'titleDoc' => $this->titleDoc];
+        return view($apiInfoHtmlPath,$data);
     }
 
     /**
@@ -194,13 +196,12 @@ abstract class Doc
      */
     private static function getRestMethodList($className)
     {
-
         $reflection = new \ReflectionClass($className);
         $Properties = $reflection->getDefaultProperties();
-        $restMethodList = explode('|', $Properties['restMethodList']);
+        $restMethodList = $Properties['restActionList'];
         //是否添加有附加方法
-        if (isset($Properties['extraMethodList'])) {
-            $extraMethodList = explode('|', $Properties['extraMethodList']);
+        if (isset($Properties['extraActionList'])) {
+            $extraMethodList = $Properties['extraActionList'];
             $restMethodList = array_merge($restMethodList, $extraMethodList);
         }
         return $restMethodList;
@@ -298,7 +299,7 @@ abstract class Doc
             if (isset($v['children']) && is_array($v['children'])) {
                 $html .= '<a href="javascript:;"><i class="fa fa-folder"></i> <span class="nav-label">' . $v['name'] . '</span><span class="fa arrow"></span></a>';//name
             } else {
-                $html .= '<a href="' . Url::build('apiInfo', ['id' => $v['id']]) . '" class="J_menuItem"><i class="fa fa-file"></i> <span class="nav-label">' . $v['name'] . '</span></a>';//
+                $html .= '<a href="' . Url::build('wiki/apiInfo', ['id' => $v['id']]) . '" ><i class="fa fa-file"></i> <span class="nav-label">' . $v['name'] . '</span></a>';//
             }
             //需要验证是否有子菜单
             if (isset($v['children']) && is_array($v['children'])) {

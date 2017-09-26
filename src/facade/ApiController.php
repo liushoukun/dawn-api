@@ -9,63 +9,87 @@
 namespace DawnApi\facade;
 
 use think\Config;
-use think\Controller;
-use think\exception\HttpResponseException;
+use  think\App;
 use think\Request;
 use think\Exception;
 use DawnApi\contract\AuthContract;
+use think\exception\HttpResponseException;
 use DawnApi\exception\UnauthorizedException;
 
-abstract class ApiController extends Controller
+
+abstract class ApiController
 {
 
     use Send;
-
-    public function __construct(Request $request = null)
-    {
-        parent::__construct($request);
-        $this->_init();
-    }
-
-
-    // 默认请求方式
-    protected $restDefaultMethod = 'get';
+    public static $app;
     /**
-     * 默认不验证
+     * 默认关闭验证
      * @var bool
      */
     public $apiAuth = false;
-
-    public static $app;
-
     /**
      * 当前资源类型
-     * @var string
+     * @var
      */
-    private $type;
+    protected $type;
     /**
-     * 运行方法
+     * 当前请求类型
+     * @var
+     */
+    protected $method; // 当前请求类型
+    /**
+     * REST 操作
+     * @var array
+     */
+    protected $restActionList = ['index', 'create', 'save', 'read', 'edit', 'update', 'delete'];
+    /**
+     * 附加方法
+     * @var array
+     */
+    protected $extraActionList = [];
+    /**
+     * 跳过验证方法
+     * @var array
+     */
+    protected $skipAuthActionList = [];
+    /**
+     * REST 请求
      * @var string
      */
-    protected $restMethodList = 'index|create|save|read|edit|update|delete';
-    protected $extraMethodList = '';
-
-        /**
-     * 返回的资源类的
+    protected $restMethodList = 'get|post|put|delete';
+    /**
+     * TYPE 类型
      * @var string
      */
-    protected $restTypeList = 'xml|json|jsonp';
+    protected $restTypeList = 'html|xml|json|rss';
+    /**
+     * 默认请求方式
+     * @var string
+     */
+    protected $restDefaultMethod = 'get';
     /**
      * REST允许输出的资源类型列表
      * @var array
      */
-    protected $restOutputType = [ //
+    protected $restOutputType = [
         'xml' => 'application/xml',
         'json' => 'application/json',
         'jsonp' => 'application/jsonp',
+        'html' => 'text/html',
     ];
 
+    /**
+     * ApiController constructor.
+     * @param Request|null $request
+     */
+    public function __construct(Request $request = null)
+    {
+        $this->_init();
+    }
 
+    /**
+     * 初始化操作
+     */
     private function _init()
     {
         // 资源类型检测
@@ -75,19 +99,43 @@ abstract class ApiController extends Controller
         if ('' == $ext) {
             // 自动检测资源类型
             $this->type = $request->type();
+
         } elseif (!preg_match('/\(' . $this->restTypeList . '\)$/i', $ext)) {
             // 资源类型非法 则用默认资源类型访问
             $this->type = $this->restDefaultType;
         } else {
             $this->type = $ext;
         }
-        //必要性的注册
-        $this->register();
-        //设置响应类型
-        $this->setType();
+        $this->type = (in_array($this->type, array_keys($this->restOutputType))) ? $this->type : $this->restDefaultType;
+        // 请求方式检测
+        $method = strtolower($request->method());
+        if (false === stripos($this->restMethodList, $method)) {
+            // 请求方式非法 则用默认请求方法
+            $method = $this->restDefaultMethod;
+        }
+        $this->method = $method;
 
-        if (self::getConfig('api_debug')) {
-            $auth = (self::getConfig('api_auth') && $this->apiAuth) ? self::auth() : true;
+
+        $this->_execAuth();
+
+    }
+
+    /**
+     * @throws UnauthorizedException
+     */
+    private function _execAuth()
+    {
+        //是否跳过验证
+        $method = Request::instance()->action();
+        $isSkipAuth = false;
+        array_map(function ($item) use ($method, &$isSkipAuth) {
+            $isSkipAuth = (strtolower($item) == strtolower($method)) ? true : $isSkipAuth;
+        }, $this->skipAuthActionList);
+        if ($isSkipAuth) return;
+
+        $this->_register();
+        if (self::_getConfig('api_debug')) {
+            $auth = (self::_getConfig('api_auth') && $this->apiAuth) ? self::_auth() : true;
             if ($auth !== true) throw new UnauthorizedException();
             //执行操作
         } else {
@@ -98,7 +146,7 @@ abstract class ApiController extends Controller
                  * 不通过可返回 return false or throw new UnauthorizedException
                  */
                 //认证
-                $auth = (self::getConfig('api_auth') && $this->apiAuth) ? self::auth() : true;
+                $auth = (self::_getConfig('api_auth') && $this->apiAuth) ? self::_auth() : true;
                 if ($auth !== true) throw new UnauthorizedException('Unauthorized');
 
             } catch (UnauthorizedException $e) {
@@ -108,29 +156,27 @@ abstract class ApiController extends Controller
                 throw  new HttpResponseException($this->sendError(500, 'server error', 500));
             }
         }
-
     }
 
-
     /**
-     * 注册必要的
+     * 注册必要
      */
-    private function register()
+    private function _register()
     {
         //初始化配置
-        self::getConfig();
+        self::_getConfig();
         //授权器
-        if (self::getConfig('api_auth') && $this->apiAuth) self::getAuth();
+        if (self::_getConfig('api_auth') && $this->apiAuth) self::_getAuth();
     }
 
     /**
      * 获取授权
      * @return mixed
      */
-    private static function getAuth()
+    private static function _getAuth()
     {
         if (!isset(self::$app['auth']) || !self::$app['auth']) {
-            $auth = self::getConfig('auth_class');
+            $auth = self::_getConfig('auth_class');
             //支持数组配置
             //判断是否实现验证接口
             if (((new \ReflectionClass($auth))->implementsInterface(AuthContract::class)))
@@ -143,7 +189,7 @@ abstract class ApiController extends Controller
      * 授权验证
      * @throws AuthException
      */
-    private static function auth()
+    private static function _auth()
     {
         $baseAuth = Factory::getInstance(\DawnApi\auth\BaseAuth::class);
         try {
@@ -162,22 +208,47 @@ abstract class ApiController extends Controller
      * @param null $keys
      * @return mixed
      */
-    final static function getConfig($keys = null)
+    private static function _getConfig($keys = null)
     {
 
-        if (!self::$app['config']) self::registerConfig();
+        if (!self::$app['config']) self::_registerConfig();
         return ($keys == null) ? self::$app['config'] : self::$app['config'][$keys];
     }
 
     /**
      * 注册配置信息
      */
-    private static function registerConfig()
+    private static function _registerConfig()
     {
         $path = realpath(__DIR__ . '/../../config/api.php');
         $api = is_array(Config::get('api')) ? Config::get('api') : [];
         self::$app['config'] = array_merge(require $path, $api);
     }
 
+    /**
+     * REST 调用
+     * @access public
+     * @param string $method 方法名
+     * @return mixed
+     * @throws \Exception
+     */
+    public function _empty($method)
+    {
+
+        if (method_exists($this, $method . '_' . $this->method . '_' . $this->type)) {
+            // RESTFul方法支持
+            $fun = $method . '_' . $this->method . '_' . $this->type;
+        } elseif ($this->method == $this->restDefaultMethod && method_exists($this, $method . '_' . $this->type)) {
+            $fun = $method . '_' . $this->type;
+        } elseif ($this->type == $this->restDefaultType && method_exists($this, $method . '_' . $this->method)) {
+            $fun = $method . '_' . $this->method;
+        }
+        if (isset($fun)) {
+            return App::invokeMethod([$this, $fun]);
+        } else {
+            // 抛出异常
+            throw  new HttpResponseException($this->sendError(500, 'error method :' . $this->method, 500, []));
+        }
+    }
 
 }
