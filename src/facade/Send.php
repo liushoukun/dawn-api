@@ -91,6 +91,7 @@ trait Send
      */
     public function response($responseData, $code, $headers,$options)
     {
+
         if (!isset($this->type) || empty($this->type)) $this->setType();
         return Response::create($responseData,$this->type, $code, $headers,$options);
     }

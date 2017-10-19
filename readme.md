@@ -1,7 +1,11 @@
 Dawn-Api 
 ===============
+[![Latest Stable Version](https://poser.pugx.org/liushoukun/dawn-api/v/stable)](https://packagist.org/packages/liushoukun/dawn-api)
+[![Total Downloads](https://poser.pugx.org/liushoukun/dawn-api/downloads)](https://packagist.org/packages/liushoukun/dawn-api)
+[![Latest Unstable Version](https://poser.pugx.org/liushoukun/dawn-api/v/unstable)](https://packagist.org/packages/liushoukun/dawn-api)
+[![License](https://poser.pugx.org/liushoukun/dawn-api/license)](https://packagist.org/packages/liushoukun/dawn-api)
+[![Monthly Downloads](https://poser.pugx.org/liushoukun/dawn-api/d/monthly)](https://packagist.org/packages/liushoukun/dawn-api)
 
-[Toc]
 
 ## 说明
 thinkphp5编写的restful风格的API，集API请求处理，权限认证，自动生成文档等功能；

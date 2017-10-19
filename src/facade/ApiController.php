@@ -73,9 +73,9 @@ abstract class ApiController
      */
     protected $restOutputType = [
         'xml' => 'application/xml',
-        'json' => 'application/json',
         'jsonp' => 'application/jsonp',
-        'html' => 'text/html',
+        'json' => 'application/json',
+
     ];
 
     /**
@@ -84,7 +84,9 @@ abstract class ApiController
      */
     public function __construct(Request $request = null)
     {
+
         $this->_init();
+
     }
 
     /**
@@ -114,8 +116,6 @@ abstract class ApiController
             $method = $this->restDefaultMethod;
         }
         $this->method = $method;
-
-
         $this->_execAuth();
 
     }
@@ -127,15 +127,22 @@ abstract class ApiController
     {
         //是否跳过验证
         $method = Request::instance()->action();
+
         $isSkipAuth = false;
         array_map(function ($item) use ($method, &$isSkipAuth) {
             $isSkipAuth = (strtolower($item) == strtolower($method)) ? true : $isSkipAuth;
         }, $this->skipAuthActionList);
-        if ($isSkipAuth) return;
 
+        if ($isSkipAuth) return;
         $this->_register();
+
         if (self::_getConfig('api_debug')) {
-            $auth = (self::_getConfig('api_auth') && $this->apiAuth) ? self::_auth() : true;
+            if (self::_getConfig('api_auth') && $this->apiAuth) {
+                $auth = self::_auth();
+            } else {
+                $auth = true;
+            }
+
             if ($auth !== true) throw new UnauthorizedException();
             //执行操作
         } else {
@@ -146,13 +153,16 @@ abstract class ApiController
                  * 不通过可返回 return false or throw new UnauthorizedException
                  */
                 //认证
+
                 $auth = (self::_getConfig('api_auth') && $this->apiAuth) ? self::_auth() : true;
+
                 if ($auth !== true) throw new UnauthorizedException('Unauthorized');
 
             } catch (UnauthorizedException $e) {
                 //授权认证失败
                 throw  new HttpResponseException($this->sendError(401, $e->getMessage(), 401, [], $e->getHeaders()));
             } catch (Exception $e) {
+
                 throw  new HttpResponseException($this->sendError(500, 'server error', 500));
             }
         }
@@ -175,8 +185,10 @@ abstract class ApiController
      */
     private static function _getAuth()
     {
+
         if (!isset(self::$app['auth']) || !self::$app['auth']) {
             $auth = self::_getConfig('auth_class');
+
             //支持数组配置
             //判断是否实现验证接口
             if (((new \ReflectionClass($auth))->implementsInterface(AuthContract::class)))
@@ -193,9 +205,8 @@ abstract class ApiController
     {
         $baseAuth = Factory::getInstance(\DawnApi\auth\BaseAuth::class);
         try {
-            $baseAuth->auth(self::$app['auth']);
+            return $baseAuth->auth(self::$app['auth']);
         } catch (UnauthorizedException $e) {
-
             throw  new  UnauthorizedException($e->authenticate, $e->getMessage());
         } catch (Exception $e) {
             throw  new  Exception('server error', 500);
